@@ -1,4 +1,4 @@
-![Group 107](https://github.com/user-attachments/assets/50261efe-b85a-44f6-b613-736928fff916)
+![Group 110](https://github.com/user-attachments/assets/3c313865-117c-45a5-b102-63f436cded69)
 
 # Firmware
 - firmware/pico1/pico1.ino
