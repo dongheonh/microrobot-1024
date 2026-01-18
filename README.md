@@ -1,6 +1,4 @@
 
-![Group 105](https://github.com/user-attachments/assets/9e762cdf-ecfa-44e5-8a10-2228e79de5f6)
-
 # microrobot-1024
 
 **Authors:** Dong Heon Han (SAM Lab)
