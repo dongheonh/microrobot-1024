@@ -1,4 +1,5 @@
-![Group 104](https://github.com/user-attachments/assets/230589e6-b947-4003-9ae3-6c34a064bb6e)
+
+![Group 105](https://github.com/user-attachments/assets/9e762cdf-ecfa-44e5-8a10-2228e79de5f6)
 
 # microrobot-1024
 
