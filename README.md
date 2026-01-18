@@ -1,4 +1,4 @@
-<img width="4096" height="2786" alt="image" src="https://github.com/user-attachments/assets/93af9451-b8df-4a5a-a3ed-a06d071ba5d3" />
+![Group 104](https://github.com/user-attachments/assets/230589e6-b947-4003-9ae3-6c34a064bb6e)
 
 # microrobot-1024
 
