@@ -1,4 +1,5 @@
-<img width="8232" height="5712" alt="image" src="https://github.com/user-attachments/assets/8e4e219a-c150-4a87-a05b-3ea76a7e3c5c" />
+<img width="9526" height="6692" alt="image" src="https://github.com/user-attachments/assets/78fad3ff-e27b-4244-8318-75dd63ecb6c8" />
+
 
 # microrobot-1024
 
