@@ -1,4 +1,4 @@
-# Flash Files
+# Firmware
 - firmware/pico1/pico1.ino
 - firmware/pico2/pico2.ino
 
