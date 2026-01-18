@@ -1,3 +1,5 @@
+<img width="8232" height="5712" alt="image" src="https://github.com/user-attachments/assets/8e4e219a-c150-4a87-a05b-3ea76a7e3c5c" />
+
 # microrobot-1024
 
 **Authors:** Dong Heon Han (SAM Lab)
