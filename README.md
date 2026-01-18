@@ -2,7 +2,7 @@
 
 **Authors:** Dong Heon Han (SAM Lab)
 
-**The first project on a 1024-magnet array.**  
+**The first project on a 1024-magnet array!**  
 A scalable 1024-channel electromagnetic array system for programmable collective robotics.
 
 ---
