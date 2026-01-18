@@ -15,8 +15,4 @@
 - 3. Action1: send action to i2c0 
 - 4. Action2: send action to i2c1
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 0f81993 (ReadMe update firmware)
 ## Flash pico1.ino and pico2.ino
