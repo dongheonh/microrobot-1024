@@ -1,5 +1,6 @@
 
-![Group 104](https://github.com/user-attachments/assets/2791b1f1-0397-4152-a398-66b5d154aa0d)
+![Group 105](https://github.com/user-attachments/assets/b7e0b631-726a-436c-b58c-8f2e8b3e3af5)
+
 
 
 # Firmware
