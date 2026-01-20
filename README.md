@@ -6,9 +6,7 @@
 **The first project on a 1024-magnet array!**  
 A scalable 1024-channel electromagnetic array system for programmable collective robotics.
 
-
 ![image 38](https://github.com/user-attachments/assets/deb2ee7f-754a-44dd-9269-846e5b871755)
-
 
 ---
 
