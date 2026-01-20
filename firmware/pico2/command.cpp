@@ -9,7 +9,7 @@ void buildX(const uint8_t* packed_in, uint8_t* X_out) {
   }
 }
 
-// Blocking read of one frame (512 bytes)
+// Blocking read of one frame (512 bytes) - read from USB
 bool readExactBytes(Stream& s, uint8_t* dst, int n) {
   int received = 0;
   while (received < n) {
