@@ -13,7 +13,7 @@
 2. Send 512 electromagnet signal to pico1
 3. Action: send action to i2c0, i2c1  
 
-![Group 115](https://github.com/user-attachments/assets/7a627608-0234-4c27-9264-226cb108ff1f)
+![Frame 1](https://github.com/user-attachments/assets/d9fcbcf4-063a-46f3-a9ff-f5d9b0826f95)
 
 # Dual-Pico Electromagnet Control Firmware
 
