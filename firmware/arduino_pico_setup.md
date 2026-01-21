@@ -16,3 +16,7 @@
 7. Verify serial output (optional):
    - `Serial.begin(115200);` → **Tools → Serial Monitor** → set **115200**.
 
+
+https://www.raspberrypi.com/documentation/microcontrollers/pico-series.html
+
+<img width="1398" height="892" alt="Screenshot 2026-01-21 at 9 32 43 AM" src="https://github.com/user-attachments/assets/b88a6fef-82c1-48fa-ba01-e40b726cb964" />
