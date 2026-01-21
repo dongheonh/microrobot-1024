@@ -2,7 +2,7 @@ import cv2
 import imutils
 
 print("initializing camera")
-cam = cv2.VideoCapture(0)
+cam = cv2.VideoCapture(1)
 
 # Get the default frame width and height
 frame_width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
