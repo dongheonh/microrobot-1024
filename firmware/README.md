@@ -134,13 +134,4 @@ For each channel:
 - Selects polarity by choosing which of the two PCA channels is active.
 - Writes a 12-bit PWM “OFF” count proportional to the commanded magnitude.
 
----
-
-## Required Initialization
-
-Both Picos must initialize both I2C buses before any output:
-
-```cpp
-Wire.begin();
-Wire1.begin();
 
