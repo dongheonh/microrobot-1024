@@ -3,15 +3,32 @@
 # Firmware
 - firmware/pico1
 - firmware/pico2
+- firmware/debug
 
-## pico1.ino
+## pico1
 1. From UART (pico2) recieve 512 electromagnet signal
 2. Action1: send action to i2c0, i2c1
 
-## pico2.ino
+## pico2
 1. From USB (PC) recieve 1024 electromagnet signal
 2. Send 512 electromagnet signal to pico1
-3. Action: send action to i2c0, i2c1  
+3. Action: send action to i2c0, i2c1
+
+## debug 
+Each `.ino` file is designed for a specific debugging purpose:
+
+- **PCAAddressChecker**  
+  Verifies I²C communication and detects connected PCA9685 devices on the bus.  
+  Used to confirm correct wiring and address configuration.
+
+- **debug_i2c_bus**  
+  Performs one-by-one testing of individual electromagnets on a single I²C bus.  
+  Used to validate channel mapping and basic actuation functionality.
+
+- **goToAddress**  
+  Connects to a specific PCA9685 device and activates only the selected electromagnet.  
+  Used to debug targeting, addressing, and selective channel control.
+
 
 ![Frame 1](https://github.com/user-attachments/assets/d9fcbcf4-063a-46f3-a9ff-f5d9b0826f95)
 
