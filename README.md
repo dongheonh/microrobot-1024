@@ -1,8 +1,7 @@
 
 # microrobot-1024
-University of Michigan Robotics
 
-**Authors:** Dong Heon Han, SAM Lab
+**Authors:** Dong Heon Han, SAM Lab (University of Michigan Robotics)
 
 **The first project on a 1024-magnet array!**  
 A scalable 1024-channel electromagnetic array system for programmable collective robotics.
