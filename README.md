@@ -1,6 +1,6 @@
 
 # microrobot-1024
-
+University of Michigan Robotics
 **Authors:** Dong Heon Han, SAM Lab
 
 **The first project on a 1024-magnet array!**  
