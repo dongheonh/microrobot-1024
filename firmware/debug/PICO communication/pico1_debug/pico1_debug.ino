@@ -1,29 +1,25 @@
-// Pico1 : Receive UART command and control LED
-#define LED_BUILTIN 25
+// pico1.ino
+// Receive '1' / '0' from Pico2 via UART and control LED
+
+#include <Arduino.h>
 
 void setup() {
-  Serial.begin(115200);      // USB debug
-  Serial1.begin(115200);    // UART0 on GPIO0(TX), GPIO1(RX)
-
-  while (!Serial) delay(100);
-  Serial.println("Pico1 ready");
-
   pinMode(LED_BUILTIN, OUTPUT);
+
+  // UART0: TX=GP0, RX=GP1
+  Serial1.setTX(0);
+  Serial1.setRX(1);
+  Serial1.begin(115200);
 }
 
 void loop() {
   if (Serial1.available()) {
     char c = Serial1.read();
-    Serial.print("RX = ");
-    Serial.println(c);
 
     if (c == '1') {
       digitalWrite(LED_BUILTIN, HIGH);
-      Serial.println("Received: ON");
-    }
-    else if (c == '0') {
+    } else if (c == '0') {
       digitalWrite(LED_BUILTIN, LOW);
-      Serial.println("Received: OFF");
     }
   }
 }

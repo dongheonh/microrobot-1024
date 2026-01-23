@@ -1,31 +1,25 @@
-// Pico2 : Blink + send UART command to Pico1
-#define LED_BUILTIN 25
+// pico2.ino
+// Blink local LED and send '1' / '0' to Pico1 via UART
+
+#include <Arduino.h>
 
 void setup() {
-  Serial.begin(115200);      // USB debug
-  Serial1.begin(115200);    // UART0 on GPIO0(TX), GPIO1(RX)
-
-  while (!Serial) delay(100);
-  Serial.println("Pico2 works");
-
   pinMode(LED_BUILTIN, OUTPUT);
+
+  // UART0: TX=GP0, RX=GP1
+  Serial1.setTX(0);
+  Serial1.setRX(1);
+  Serial1.begin(115200);
 }
 
 void loop() {
-  static int cnt = 0;
-
-  // LED ON
+  // LED ON + send '1'
   digitalWrite(LED_BUILTIN, HIGH);
-  Serial1.write('1');              // tell Pico1: ON
-  Serial.println("Send: 1 (ON)");
-  delay(50);
+  Serial1.write('1');
+  delay(500);
 
-  // LED OFF
+  // LED OFF + send '0'
   digitalWrite(LED_BUILTIN, LOW);
-  Serial1.write('0');              // tell Pico1: OFF
-  Serial.println("Send: 0 (OFF)");
-  delay(50);
-
-  Serial.print("print test = ");
-  Serial.println(cnt++);
+  Serial1.write('0');
+  delay(500);
 }
