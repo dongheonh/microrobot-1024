@@ -38,7 +38,6 @@ uint16_t crc16_ccitt(const uint8_t* data, int n, uint16_t init=0xFFFF);
 void buildX(const uint8_t* packed256, uint8_t* X512);
 
 // action: X[0..255] -> I2C0, X[256..511] -> I2C1
-// (아래 구현은 “바이트 스트림 전송” 최소 버전. PCA 드라이버로 교체 가능.)
 void actionX(TwoWire& i2c0, TwoWire& i2c1, const uint8_t* X512);
 
 // ACK helpers

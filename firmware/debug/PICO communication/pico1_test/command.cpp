@@ -64,8 +64,7 @@ void buildX(const uint8_t* packed256, uint8_t* X512) {
   }
 }
 
-// -------- actionX: 최소 “전송” 버전 --------
-// NOTE: PCA9685 제어를 하려면 여기만 PCA driver로 교체하면 됨.
+// -------- actionX --------
 static constexpr uint8_t I2C_ADDR0 = 0x40; // TODO: set
 static constexpr uint8_t I2C_ADDR1 = 0x40; // TODO: set
 static constexpr int I2C_CHUNK = 32;
