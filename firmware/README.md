@@ -136,9 +136,9 @@ Converts packed bytes into 4-bit channel commands:
 - Output length is `2 × packed_bytes`.
 
 ### Packet Serialization
-- MAVLink: https://mavlink.io/en/guide/serialization.html?utm_source=chatgpt.com
-- PPP: https://www.rfc-editor.org/rfc/rfc1662.html?utm_source=chatgpt.com
-- Cyclic redundancy check: https://en.wikipedia.org/wiki/Cyclic_redundancy_check?utm_source=chatgpt.com
+- MAVLink: https://mavlink.io/en/guide/serialization.html?utm_source
+- PPP: https://www.rfc-editor.org/rfc/rfc1662.html?utm_source
+- Cyclic redundancy check: https://en.wikipedia.org/wiki/Cyclic_redundancy_check?utm_source
 
 ---
 
