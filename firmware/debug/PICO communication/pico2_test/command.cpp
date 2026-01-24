@@ -109,11 +109,11 @@ bool readAck(Stream& s, uint32_t expected_seq, uint8_t* out_status, uint32_t tim
 
   while ((micros() - t0) < timeout_us) {
     while (s.available() && idx < ACK_BYTES) {
-      buf[idx++] = (uint8_t)s.read();
+      buf[idx++] = (uint8_t)s.read();         // fill up the buf 
     }
     if (idx < ACK_BYTES) continue;
 
-    if (rd_u16_le(&buf[0]) == ACK_MAGIC && rd_u32_le(&buf[2]) == expected_seq) {
+    if (rd_u16_le(&buf[0]) == ACK_MAGIC && rd_u32_le(&buf[2]) == expected_seq) {      // validate - real ack 2 byte magic, 4 byte seq, status
       if (out_status) *out_status = buf[6];
       return true;
     }

@@ -2,7 +2,7 @@
 #include <Wire.h>
 #include "command.h"
 
-static uint8_t seq4[4];
+static uint8_t seq_received[4];
 static uint8_t data256[UART_PAYLOAD_BYTES]; // 256
 static uint8_t X[X_VALUES];
 
@@ -22,8 +22,8 @@ void setup() {
 
 void loop() {
   // 1) Read SEQ(4)
-  readExactBytes(Serial1, seq4, 4);
-  uint32_t seq = rd_u32_le(seq4);
+  readExactBytes(Serial1, seq_received, 4);
+  uint32_t seq = rd_u32_le(seq_received);
 
   // 2) Read 256 bytes payload
   readExactBytes(Serial1, data256, UART_PAYLOAD_BYTES);
@@ -32,7 +32,7 @@ void loop() {
   buildX(data256, X);
   actionX(Wire, Wire1, X);
 
-  // 4) ACK back to Pico2
+  // 4) ACK back to Pico2 send seq (u-turn of seq)
   uint8_t ack7[ACK_BYTES];
   makeAck(ack7, seq, /*status=*/1);
   Serial1.write(ack7, ACK_BYTES);

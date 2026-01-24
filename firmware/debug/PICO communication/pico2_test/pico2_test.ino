@@ -58,11 +58,11 @@ void loop() {
 
   // 6) Wait Pico1 ACK then forward ACK to PC
   uint8_t status = 0;
-  bool ack_ok = readAck(Serial1, seq, &status, ACK_TIMEOUT_US);
+  bool ack_ok = readAck(Serial1, seq, &status, ACK_TIMEOUT_US); // validating BUF crosschecking
   if (ack_ok) {
     uint8_t ack7[ACK_BYTES];
     makeAck(ack7, seq, status);
-    Serial.write(ack7, ACK_BYTES); // PC waits for this before next frame
+    Serial.write(ack7, ACK_BYTES); // PC waits for this before next frame (same as pico->pico2 what recieved)
   } else {
     // no ack -> PC will timeout and resend
   }
