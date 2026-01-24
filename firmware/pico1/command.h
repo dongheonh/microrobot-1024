@@ -2,29 +2,44 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-// A. Serial read USB input from PC: system sizes (1024 electromagnet array)
-constexpr int NUM_CHANNELS  = 1024;                         // controlling 1024 electromagnets
-constexpr int PACKED_BYTES = NUM_CHANNELS / 2;              // using 512 bytes for 1024 electromagnets
+// ===== Data sizes =====
+constexpr int DATA_BYTES   = 512;          // pure magnet data: 512 bytes (1024 magnets * 4 bits)
+constexpr int DATA_HALF    = DATA_BYTES/2; // 256 bytes
+constexpr int X_VALUES     = DATA_HALF*2;  // 512 nibbles -> 512 values (0..15)
 
-// B. Pack X:  sizes for pico2 and pico1 (512 electromagnets)
-constexpr int NUM_CHANNELS_PICO = 512;                      // 512 electromagnet channels on pico2
-constexpr int PACKED_BYTES_HALF = PACKED_BYTES / 2;         // 256 bytes for 512 electromagnet
+// ===== Framing (PC <-> Pico2) =====
+constexpr uint16_t MAGIC = 0x55AA;         // bytes: AA 55
+constexpr int HDR_BYTES  = 6;              // MAGIC(2)+SEQ(4)
+constexpr int CRC_BYTES  = 2;              // CRC16
+constexpr int FRAME_BYTES = HDR_BYTES + DATA_BYTES + CRC_BYTES; // 520 bytes total
 
-// C. X to Action: PCA9685 (Adafruit 16-Channel 12-bit PWM/Servo Driver - I2C interface)
-constexpr int NUM_PCA = 32;                                 // total # of PCA9685 per I2C bus 
-constexpr int X_PER_PCA = 8;                                // 8 electromagnets per PCA9685
+// ===== UART (Pico2 <-> Pico1) =====
+// Pico2 sends: SEQ(4) + 256 data bytes
+constexpr int UART_SEQ_BYTES = 4;
+constexpr int UART_PAYLOAD_BYTES = 256;
 
-constexpr uint8_t PCA_BASE_ADDR = 0x40;                     // the PCA9685's address A5..A0 = 000000
-constexpr int ACTION_X_LEN = NUM_PCA * X_PER_PCA;           // 256 per I2C bus
+// Pico1 ACK back: ACK_MAGIC(2)+SEQ(4)+STATUS(1)
+constexpr uint16_t ACK_MAGIC = 0x33CC;     // bytes: CC 33
+constexpr int ACK_BYTES = 7;
 
-//-----------////-----------////-----------//
+// ===== API =====
+void readExactBytes(Stream& s, uint8_t* dst, int n);
+void writeExactBytes(Stream& s, const uint8_t* src, int n);
 
-// A. Serial read USB input from PC: blocking read of one frame (512 bytes) in real time 
-bool readExactBytes(Stream& s, uint8_t* dst, int n);
+uint16_t rd_u16_le(const uint8_t* p);
+uint32_t rd_u32_le(const uint8_t* p);
+void     wr_u16_le(uint8_t* p, uint16_t v);
+void     wr_u32_le(uint8_t* p, uint32_t v);
 
-// B. Pack X: 512 bytes data -> X for pico1, X for pico2
-void buildX(const uint8_t* packed_in, uint8_t* X_out, int packed_bytes);
+// CRC16-CCITT (0x1021), init 0xFFFF
+uint16_t crc16_ccitt(const uint8_t* data, int n, uint16_t init=0xFFFF);
 
-// C. X to Action: PCA9685 over I2C0/I2C1
-void actionX(TwoWire& bus0, TwoWire& bus1, const uint8_t* X512);
+// unpack 256 bytes -> 512 values (0..15)
+void buildX(const uint8_t* packed256, uint8_t* X512);
 
+// action: X[0..255] -> I2C0, X[256..511] -> I2C1
+void actionX(TwoWire& i2c0, TwoWire& i2c1, const uint8_t* X512);
+
+// ACK helpers
+void makeAck(uint8_t* ack7, uint32_t seq, uint8_t status);
+bool readAck(Stream& s, uint32_t expected_seq, uint8_t* out_status, uint32_t timeout_us);

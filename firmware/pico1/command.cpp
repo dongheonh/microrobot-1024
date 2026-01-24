@@ -1,74 +1,126 @@
 #include "command.h"
 
-// A. Serial Read USB input from PC: read of one frame (512 bytes) - read from USB "whatever stream, n bytes are read + save at the destination buffer (dst)"
-bool readExactBytes(Stream& s, uint8_t* dst, int n) {
-  int received = 0;
-  while (received < n) {
-    if (s.available()) {
-      dst[received++] = s.read();         // read one by one until the end (n)
-    }
-  }
-  return true;
-}
+void readExactBytes(Stream& s, uint8_t* dst, int n) {
+  int got = 0;
+  while (got < n) {
+    int avail = s.available();
+    if (avail <= 0) continue;
 
-// B. Pack X from packed 512 bytes (PACKED_BYTES)
-void buildX(const uint8_t* packed_in, uint8_t* X_out, int pakced_bytes) {
-  for (int i = 0; i < pakced_bytes; ++i) {
-    uint8_t b = packed_in[i];
-    X_out[2 * i]     = b & 0x0F;          // low nibble: first 4 bit
-    X_out[2 * i + 1] = (b >> 4) & 0x0F;   // push 4 bit right (b >> 4) => high nibble: last 4 bit 
+    int take = avail;
+    if (take > (n - got)) take = (n - got);
+
+    int r = s.readBytes((char*)(dst + got), take);
+    got += r;
   }
 }
 
-// C. X to Action: PCA9685 over I2C0/I2C1
+void writeExactBytes(Stream& s, const uint8_t* src, int n) {
+  int sent = 0;
+  while (sent < n) {
+    int w = s.write(src + sent, n - sent);
+    sent += w;
+  }
+}
+
+// 2 bytes read buffer (from the reference address get 16 bits (2 bytes)) pc -> pico2
+uint16_t rd_u16_le(const uint8_t* p) {
+  return (uint16_t)p[0] | ((uint16_t)p[1] << 8);      // ** shift data by 8 bits (1byte)
+}
+
+// 4 bytes read buffer (from the reference address get 32 bits (4 bytes)) pc -> pico2, pico2 -> pico1 
+uint32_t rd_u32_le(const uint8_t* p) {
+  return (uint32_t)p[0]
+       | ((uint32_t)p[1] << 8)                        // ** shift data by 8 bits (1byte)
+       | ((uint32_t)p[2] << 16)
+       | ((uint32_t)p[3] << 24);
+}
+
+// 2 bytes write buffer: write 
+void wr_u16_le(uint8_t* p, uint16_t v) {
+  p[0] = (uint8_t)(v & 0xFF);
+  p[1] = (uint8_t)((v >> 8) & 0xFF);
+}
+
+// 4 bytes write buffer:  write sequence from pico2 -> pico1
+void wr_u32_le(uint8_t* p, uint32_t v) {
+  p[0] = (uint8_t)(v & 0xFF);
+  p[1] = (uint8_t)((v >> 8) & 0xFF);
+  p[2] = (uint8_t)((v >> 16) & 0xFF);
+  p[3] = (uint8_t)((v >> 24) & 0xFF);
+}
+
+// crc algorithm
+static inline uint16_t crc16_update(uint16_t crc, uint8_t data) {   
+  crc ^= ((uint16_t)data << 8);         // ** shift data 
+  for (int i = 0; i < 8; i++) {
+    crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : (crc << 1);
+  }
+  return crc;
+}
+
+// crc read 
+// read command.h
+uint16_t crc16_ccitt(const uint8_t* data, int n, uint16_t init) {
+  uint16_t crc = init;
+  for (int i = 0; i < n; i++) crc = crc16_update(crc, data[i]);
+  return crc;
+}
+
+void buildX(const uint8_t* packed256, uint8_t* X512) {
+  for (int i = 0; i < 256; i++) {
+    uint8_t b = packed256[i];
+    X512[2*i + 0] = (uint8_t)(b & 0x0F);
+    X512[2*i + 1] = (uint8_t)((b >> 4) & 0x0F);         // ** shift data by 4 bits (0.5 byte)
+  }
+}
+
+// -------- actionX --------
+static constexpr uint8_t I2C_ADDR0 = 0x40; // TODO: set
+static constexpr uint8_t I2C_ADDR1 = 0x40; // TODO: set
+static constexpr int I2C_CHUNK = 32;
+
+static int i2c_send(TwoWire& W, uint8_t addr, const uint8_t* data, int n) {
+  W.beginTransmission(addr);
+  W.write(data, n);
+  return W.endTransmission(); // 0=OK
+}
+
 void actionX(TwoWire& i2c0, TwoWire& i2c1, const uint8_t* X512) {
-  const uint8_t BASE_ADDR = 0x40;     // A5..A0 = 000000
-  const uint8_t REG_LED0  = 0x06;     // LED0_ON_L
-  const int X_PER_BUS = 256;          // 32 PCA * 8 Xi
-  const int X_PER_PCA = 8;            // 16ch / (2ch per Xi)
-
-  auto magToPwm = [](uint8_t m) -> uint16_t {
-    if (m > 7) m = 7;
-    return (uint16_t)((uint32_t)m * 4095u / 7u); // 0..4095: pwm action output
-  };
-
-  auto setPWM = [&](TwoWire& bus, uint8_t addr, uint8_t ch, uint16_t offCount) {
-
-    uint8_t reg = (uint8_t)(REG_LED0 + 4 * ch);
-    bus.beginTransmission(addr);
-    bus.write(reg);
-    bus.write(0x00); bus.write(0x00);                 // ON_L, ON_H
-    bus.write((uint8_t)(offCount & 0xFF));            // OFF_L
-    bus.write((uint8_t)((offCount >> 8) & 0x0F));     // OFF_H
-    bus.endTransmission();
-  };
-
-  // 1) X --> devide it by two: X_i2c0, X_i2c1
-  for (int whichBus = 0; whichBus < 2; ++whichBus) {
-    TwoWire& bus = (whichBus == 0) ? i2c0 : i2c1;
-    const uint8_t* X_i2c = X512 + (whichBus * X_PER_BUS);  // X_i2c0 or X_i2c1
-
-    // 2) 8 values per a pca9685 
-    for (int i = 0; i < X_PER_BUS; ++i) {
-      // 3) increase i, i2c address change 
-      uint8_t addr = (uint8_t)(BASE_ADDR + (i / X_PER_PCA)); // 0x40..0x5F
-      uint8_t pair = (uint8_t)(i % X_PER_PCA);               // 0..7
-      uint8_t chA  = (uint8_t)(2 * pair);                    // 0,2,...,14
-      uint8_t chB  = (uint8_t)(chA + 1);                     // 1,3,...,15
-
-      // 4) polarity logic
-      uint8_t xi = X_i2c[i];          // 0..15
-      bool neg = (xi <= 7);
-      uint8_t m = neg ? xi : (uint8_t)(xi - 8);   // 0..7
-      uint16_t pwm = magToPwm(m);
-
-      if (neg) {
-        setPWM(bus, addr, chA, pwm);
-        setPWM(bus, addr, chB, 0);
-      } else {
-        setPWM(bus, addr, chA, 0);
-        setPWM(bus, addr, chB, pwm);
-      }
-    }
+  // i2c0: X[0..255] (256 bytes)
+  for (int off = 0; off < 256; off += I2C_CHUNK) {
+    i2c_send(i2c0, I2C_ADDR0, X512 + off, I2C_CHUNK);
   }
+  // i2c1: X[256..511] (256 bytes)
+  for (int off = 0; off < 256; off += I2C_CHUNK) {
+    i2c_send(i2c1, I2C_ADDR1, X512 + 256 + off, I2C_CHUNK);
+  }
+}
+
+void makeAck(uint8_t* ack7, uint32_t seq, uint8_t status) {
+  wr_u16_le(&ack7[0], ACK_MAGIC);
+  wr_u32_le(&ack7[2], seq);
+  ack7[6] = status;
+}
+
+bool readAck(Stream& s, uint32_t expected_seq, uint8_t* out_status, uint32_t timeout_us) {
+  uint8_t buf[ACK_BYTES];
+  int idx = 0;
+  uint32_t t0 = micros();
+
+  while ((micros() - t0) < timeout_us) {
+    while (s.available() && idx < ACK_BYTES) {
+      buf[idx++] = (uint8_t)s.read();
+    }
+    if (idx < ACK_BYTES) continue;
+
+    if (rd_u16_le(&buf[0]) == ACK_MAGIC && rd_u32_le(&buf[2]) == expected_seq) {
+      if (out_status) *out_status = buf[6];
+      return true;
+    }
+
+    // resync shift 1 byte
+    memmove(buf, buf + 1, ACK_BYTES - 1);
+    idx = ACK_BYTES - 1;
+  }
+  return false;
 }

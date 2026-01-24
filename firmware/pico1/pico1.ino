@@ -1,28 +1,40 @@
-// pico1.ino
+#include <Arduino.h>
+#include <Wire.h>
 #include "command.h"
 
-uint8_t packed_half[PACKED_BYTES_HALF];   // 256 bytes from pico2
-uint8_t X[NUM_CHANNELS / 2];              // 512 channels on pico1
+static uint8_t seq4[4];
+static uint8_t data256[UART_PAYLOAD_BYTES]; // 256
+static uint8_t X[X_VALUES];
+
+constexpr uint32_t UART_BAUD = 921600;
+constexpr uint32_t I2C_HZ    = 1000000;
 
 void setup() {
-  Serial.begin(115200);    // optional debug
-  Serial1.begin(115200);   // UART from pico2
-
-  while (!Serial) {}
+  Serial1.setTX(0);
+  Serial1.setRX(1);
+  Serial1.begin(UART_BAUD);
 
   Wire.begin();
   Wire1.begin();
-
-  Serial.println("pico1 setup complete");
+  Wire.setClock(I2C_HZ);
+  Wire1.setClock(I2C_HZ);
 }
 
 void loop() {
-  // A) read 256 bytes from pico2
-  readExactBytes(Serial1, packed_half, PACKED_BYTES_HALF);
+  // 1) Read SEQ(4)
+  readExactBytes(Serial1, seq4, 4);
+  uint32_t seq = rd_u32_le(seq4);
 
-  // B) unpack -> 512 X values
-  buildX(packed_half, X, PACKED_BYTES_HALF);
+  // 2) Read 256 bytes payload
+  readExactBytes(Serial1, data256, UART_PAYLOAD_BYTES);
 
-  // C) apply to PCA9685 over I2C0/I2C1
+  // 3) build X from these 256 bytes and do local I2C actions
+  buildX(data256, X);
   actionX(Wire, Wire1, X);
+
+  // 4) ACK back to Pico2
+  uint8_t ack7[ACK_BYTES];
+  makeAck(ack7, seq, /*status=*/1);
+  Serial1.write(ack7, ACK_BYTES);
+  Serial1.flush();
 }
