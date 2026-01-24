@@ -2,7 +2,7 @@
 #include <Wire.h>
 #include "command.h"
 
-static uint8_t hdr[HDR_BYTES];          // 6
+static uint8_t hdr[HDR_BYTES];          // 6 frame header (MAGIC+SEQ)
 static uint8_t data512[DATA_BYTES];     // 512 pure
 static uint8_t crc2[CRC_BYTES];         // 2
 static uint8_t X512[X_VALUES];          // 512 values for local i2c action
@@ -26,17 +26,19 @@ void setup() {
 
 void loop() {
   // 1) Read frame header (MAGIC+SEQ)
-  readExactBytes(Serial, hdr, HDR_BYTES);
-  if (rd_u16_le(&hdr[0]) != MAGIC) return;
-  uint32_t seq = rd_u32_le(&hdr[2]);
+  readExactBytes(Serial, hdr, HDR_BYTES);         // first read header -> read exact bytes: 6 bytes and save as hdr
+
+  // from frame header split -> seq and magic
+  if (rd_u16_le(&hdr[0]) != MAGIC) return;        // read value (from the address: &hdr[0] -> hdr[1]) and make 16-bit value (hdr[{0,1}]), compare with MAGIC
+  uint32_t seq = rd_u32_le(&hdr[2]);              // split seq
 
   // 2) Read 512 data
-  readExactBytes(Serial, data512, DATA_BYTES);
+  readExactBytes(Serial, data512, DATA_BYTES);    // data512 includes pico1, pico2 action data 
 
   // 3) Read CRC16 and verify
   readExactBytes(Serial, crc2, CRC_BYTES);
   uint16_t crc_rx = rd_u16_le(crc2);
-  uint16_t crc_ok = (crc16_ccitt(data512, DATA_BYTES) == crc_rx);
+  uint16_t crc_ok = (crc16_ccitt(data512, DATA_BYTES) == crc_rx);   // read command.h
 
   if (!crc_ok) {
     // CRC fail -> do not forward; PC will timeout and resend
