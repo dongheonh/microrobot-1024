@@ -3,7 +3,8 @@ import struct
 import serial
 
 # config. - USB
-PORT = "/dev/cu.usbmodemSN234567892"
+PORT = "/dev/cu.usbmodem3101" 
+
 BAUDRATE = 115200
 TIMEOUT  = 0.5
 
@@ -52,7 +53,7 @@ def parse_ack(ack7: bytes):
     return am, seq, status
 
 def main():
-    ser = serial.Serial(PORT, BAUDRATE, TIMEOUT)  # timeout controls ACK wait
+    ser = serial.Serial(PORT, BAUDRATE, timeout=TIMEOUT)
 
     try:
         for seq in range(100):
