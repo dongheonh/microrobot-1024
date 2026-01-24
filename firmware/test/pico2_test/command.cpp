@@ -22,26 +22,19 @@ void writeExactBytes(Stream& s, const uint8_t* src, int n) {
   }
 }
 
-// 2 bytes read buffer (from the reference address get 16 bits (2 bytes)) pc -> pico2
 uint16_t rd_u16_le(const uint8_t* p) {
-  return (uint16_t)p[0] | ((uint16_t)p[1] << 8);      // ** shift data by 8 bits (1byte)
+  return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
 }
-
-// 4 bytes read buffer (from the reference address get 32 bits (4 bytes)) pc -> pico2, pico2 -> pico1 
 uint32_t rd_u32_le(const uint8_t* p) {
   return (uint32_t)p[0]
-       | ((uint32_t)p[1] << 8)                        // ** shift data by 8 bits (1byte)
+       | ((uint32_t)p[1] << 8)
        | ((uint32_t)p[2] << 16)
        | ((uint32_t)p[3] << 24);
 }
-
-// 2 bytes write buffer: write 
 void wr_u16_le(uint8_t* p, uint16_t v) {
   p[0] = (uint8_t)(v & 0xFF);
   p[1] = (uint8_t)((v >> 8) & 0xFF);
 }
-
-// 4 bytes write buffer:  write sequence from pico2 -> pico1
 void wr_u32_le(uint8_t* p, uint32_t v) {
   p[0] = (uint8_t)(v & 0xFF);
   p[1] = (uint8_t)((v >> 8) & 0xFF);
@@ -49,17 +42,14 @@ void wr_u32_le(uint8_t* p, uint32_t v) {
   p[3] = (uint8_t)((v >> 24) & 0xFF);
 }
 
-// crc algorithm
-static inline uint16_t crc16_update(uint16_t crc, uint8_t data) {   
-  crc ^= ((uint16_t)data << 8);         // ** shift data 
+static inline uint16_t crc16_update(uint16_t crc, uint8_t data) {
+  crc ^= ((uint16_t)data << 8);
   for (int i = 0; i < 8; i++) {
     crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : (crc << 1);
   }
   return crc;
 }
 
-// crc read 
-// read command.h
 uint16_t crc16_ccitt(const uint8_t* data, int n, uint16_t init) {
   uint16_t crc = init;
   for (int i = 0; i < n; i++) crc = crc16_update(crc, data[i]);
@@ -70,13 +60,15 @@ void buildX(const uint8_t* packed256, uint8_t* X512) {
   for (int i = 0; i < 256; i++) {
     uint8_t b = packed256[i];
     X512[2*i + 0] = (uint8_t)(b & 0x0F);
-    X512[2*i + 1] = (uint8_t)((b >> 4) & 0x0F);         // ** shift data by 4 bits (0.5 byte)
+    X512[2*i + 1] = (uint8_t)((b >> 4) & 0x0F);
   }
 }
 
 // -------- actionX --------
 static constexpr uint8_t I2C_ADDR0 = 0x40; // TODO: set
 static constexpr uint8_t I2C_ADDR1 = 0x40; // TODO: set
+
+// 32B recommended
 static constexpr int I2C_CHUNK = 32;
 
 static int i2c_send(TwoWire& W, uint8_t addr, const uint8_t* data, int n) {
@@ -85,14 +77,14 @@ static int i2c_send(TwoWire& W, uint8_t addr, const uint8_t* data, int n) {
   return W.endTransmission(); // 0=OK
 }
 
-void actionX(TwoWire& i2c0, TwoWire& i2c1, const uint8_t* X512) {
+void actionX(TwoWire& wire0, TwoWire& wire1, const uint8_t* X512) {
   // i2c0: X[0..255] (256 bytes)
   for (int off = 0; off < 256; off += I2C_CHUNK) {
-    i2c_send(i2c0, I2C_ADDR0, X512 + off, I2C_CHUNK);
+    (void)i2c_send(wire0, I2C_ADDR0, X512 + off, I2C_CHUNK); // added - (void) for dubugging
   }
   // i2c1: X[256..511] (256 bytes)
   for (int off = 0; off < 256; off += I2C_CHUNK) {
-    i2c_send(i2c1, I2C_ADDR1, X512 + 256 + off, I2C_CHUNK);
+    (void)i2c_send(wire1, I2C_ADDR1, X512 + 256 + off, I2C_CHUNK); // added - (void) for debugging
   }
 }
 
@@ -109,11 +101,11 @@ bool readAck(Stream& s, uint32_t expected_seq, uint8_t* out_status, uint32_t tim
 
   while ((micros() - t0) < timeout_us) {
     while (s.available() && idx < ACK_BYTES) {
-      buf[idx++] = (uint8_t)s.read();         // fill up the buf 
+      buf[idx++] = (uint8_t)s.read();
     }
     if (idx < ACK_BYTES) continue;
 
-    if (rd_u16_le(&buf[0]) == ACK_MAGIC && rd_u32_le(&buf[2]) == expected_seq) {      // validate - real ack 2 byte magic, 4 byte seq, status
+    if (rd_u16_le(&buf[0]) == ACK_MAGIC && rd_u32_le(&buf[2]) == expected_seq) {
       if (out_status) *out_status = buf[6];
       return true;
     }

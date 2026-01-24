@@ -37,8 +37,9 @@ uint16_t crc16_ccitt(const uint8_t* data, int n, uint16_t init=0xFFFF);
 // unpack 256 bytes -> 512 values (0..15)
 void buildX(const uint8_t* packed256, uint8_t* X512);
 
-// action: X[0..255] -> I2C0, X[256..511] -> I2C1
-void actionX(TwoWire& i2c0, TwoWire& i2c1, const uint8_t* X512);
+// action: X[0..255] -> I2C0, X[256..511] -> I2C1 
+// void buildX(const uint8_t* packed256, uint8_t* X512); // main
+void actionX(TwoWire& wire0, TwoWire& wire1, const uint8_t* X512); // debug code
 
 // ACK helpers
 void makeAck(uint8_t* ack7, uint32_t seq, uint8_t status);

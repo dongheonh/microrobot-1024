@@ -11,12 +11,20 @@ constexpr uint32_t UART_BAUD = 921600;
 constexpr uint32_t I2C_HZ    = 1000000;
 constexpr uint32_t ACK_TIMEOUT_US = 200000; // 200ms
 
+// Enable/disable I2C actions while PCA9685 is not connected
+#define ENABLE_I2C_ACTIONS 1 // code changed (testing)
+
 void setup() {
-  Serial.begin(0);
+  Serial.begin(115200);
 
   Serial1.setTX(0);  // GP0
   Serial1.setRX(1);  // GP1
   Serial1.begin(UART_BAUD);
+
+  Wire.setSDA(9);
+  Wire.setSCL(10);
+  Wire1.setSDA(11);
+  Wire1.setSCL(12);
 
   Wire.begin();
   Wire1.begin();
@@ -30,15 +38,16 @@ void loop() {
 
   // from frame header split -> seq and magic
   if (rd_u16_le(&hdr[0]) != MAGIC) return;        // read value (from the address: &hdr[0] -> hdr[1]) and make 16-bit value (hdr[{0,1}]), compare with MAGIC
-  uint32_t seq_read = rd_u32_le(&hdr[2]);              // split seq
+  
+  const uint32_t seq_read = rd_u32_le(&hdr[2]);              // split seq - code changed 
 
   // 2) Read 512 data
   readExactBytes(Serial, data512, DATA_BYTES);    // data512 includes pico1, pico2 action data 
 
   // 3) Read CRC16 and verify
   readExactBytes(Serial, crc, CRC_BYTES);
-  uint16_t crc_rx = rd_u16_le(crc);
-  uint16_t crc_ok = (crc16_ccitt(data512, DATA_BYTES) == crc_rx);   // read command.h, if crc is correct, proceed 
+  const uint16_t crc_rx = rd_u16_le(crc);
+  const bool crc_ok = (crc16_ccitt(data512, DATA_BYTES) == crc_rx);   // read command.h, if crc is correct, proceed 
 
   if (!crc_ok) {
     // CRC fail --> PC will count this 
@@ -52,17 +61,20 @@ void loop() {
   writeExactBytes(Serial1, data512, DATA_HALF);
   Serial1.flush();
 
-  // 5) Pico2 local I2C actions using second half (256 bytes)
-  buildX(data512 + DATA_HALF, X); // unpack 256 -> 512 values
-  actionX(Wire, Wire1, X);
+  // 5) Pico2 local I2C actions using second half (256 bytes) // code changed (testing)
+  #if ENABLE_I2C_ACTIONS
+    buildX(data512 + DATA_HALF, X);
+    actionX(Wire, Wire1, X);
+  #endif
 
   // 6) Wait Pico1 ACK then forward ACK to PC
   uint8_t status = 0;
-  bool ack_ok = readAck(Serial1, seq, &status, ACK_TIMEOUT_US); // validating BUF crosschecking
+  bool ack_ok = readAck(Serial1, seq_read, &status, ACK_TIMEOUT_US); // validating BUF crosschecking
   if (ack_ok) {
     uint8_t ack7[ACK_BYTES];
-    makeAck(ack7, seq, status);
-    Serial.write(ack7, ACK_BYTES); // PC waits for this before next frame (same as pico->pico2 what recieved)
+    makeAck(ack7, seq_read, status);
+    writeExactBytes(Serial, ack7, ACK_BYTES); // PC waits for this before next frame (same as pico->pico2 what recieved)
+    Serial.flush();
   } else {
     // no ack -> PC will timeout and resend
   }

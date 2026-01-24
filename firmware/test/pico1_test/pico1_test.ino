@@ -9,13 +9,25 @@ static uint8_t X512[X_VALUES];
 constexpr uint32_t UART_BAUD = 921600;
 constexpr uint32_t I2C_HZ    = 1000000;
 
+#define ENABLE_I2C_ACTIONS 1      // code changed (testing)
+
+// I2C pin mapping (RP2040 GPIO numbers)
+// Wire  (I2C0): SDA=GP9,  SCL=GP10
+// Wire1 (I2C1): SDA=GP11, SCL=GP12
 void setup() {
   Serial1.setTX(0);
   Serial1.setRX(1);
   Serial1.begin(UART_BAUD);
 
+  // i2c pin mapping
+  Wire.setSDA(9);                 // code changed (testing)
+  Wire.setSCL(10);                // code changed (testing)
+  Wire1.setSDA(11);               // code changed (testing)
+  Wire1.setSCL(12);               // code changed (testing)
+
   Wire.begin();
   Wire1.begin();
+
   Wire.setClock(I2C_HZ);
   Wire1.setClock(I2C_HZ);
 }
@@ -30,10 +42,14 @@ void loop() {
 
   // 3) build X from these 256 bytes and do local I2C actions
   buildX(data256, X512);
-  actionX(Wire, Wire1, X512);
+
+  #if ENABLE_I2C_ACTIONS          // code changed (testing)
+  actionX(Wire, Wire1, X512);     // code changed (testing)
+  #endif                          // code changed (testing)
 
   // 4) ACK back to Pico2
   uint8_t ack7[ACK_BYTES];
+
   makeAck(ack7, seq, /*status=*/1);
   Serial1.write(ack7, ACK_BYTES);
   Serial1.flush();

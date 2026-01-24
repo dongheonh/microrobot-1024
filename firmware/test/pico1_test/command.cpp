@@ -67,6 +67,8 @@ void buildX(const uint8_t* packed256, uint8_t* X512) {
 // -------- actionX --------
 static constexpr uint8_t I2C_ADDR0 = 0x40; // TODO: set
 static constexpr uint8_t I2C_ADDR1 = 0x40; // TODO: set
+
+// 32B recommended
 static constexpr int I2C_CHUNK = 32;
 
 static int i2c_send(TwoWire& W, uint8_t addr, const uint8_t* data, int n) {
@@ -75,14 +77,14 @@ static int i2c_send(TwoWire& W, uint8_t addr, const uint8_t* data, int n) {
   return W.endTransmission(); // 0=OK
 }
 
-void actionX(TwoWire& i2c0, TwoWire& i2c1, const uint8_t* X512) {
+void actionX(TwoWire& wire0, TwoWire& wire1, const uint8_t* X512) {
   // i2c0: X[0..255] (256 bytes)
   for (int off = 0; off < 256; off += I2C_CHUNK) {
-    i2c_send(i2c0, I2C_ADDR0, X512 + off, I2C_CHUNK);
+    (void)i2c_send(wire0, I2C_ADDR0, X512 + off, I2C_CHUNK); // added - (void) for dubugging
   }
   // i2c1: X[256..511] (256 bytes)
   for (int off = 0; off < 256; off += I2C_CHUNK) {
-    i2c_send(i2c1, I2C_ADDR1, X512 + 256 + off, I2C_CHUNK);
+    (void)i2c_send(wire1, I2C_ADDR1, X512 + 256 + off, I2C_CHUNK); // added - (void) for debugging
   }
 }
 
