@@ -31,7 +31,8 @@ Each `.ino` file is designed for a specific debugging purpose:
   Used to debug targeting, addressing, and selective channel control.
 
 
-![Frame 1](https://github.com/user-attachments/assets/d9fcbcf4-063a-46f3-a9ff-f5d9b0826f95)
+![image 63](https://github.com/user-attachments/assets/38e2d852-f00a-4581-9dcc-0fbdd432af4f)
+
 
 # Dual-Pico Electromagnet Control Firmware
 
