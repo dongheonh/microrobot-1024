@@ -16,6 +16,9 @@ constexpr uint32_t ACK_TIMEOUT_US = 200000; // 200ms
 
 void setup() {
   Serial.begin(115200);
+  
+  delay(1000);
+  Serial.println("pico2 boot");
 
   Serial1.setTX(0);  // GP0
   Serial1.setRX(1);  // GP1
@@ -33,6 +36,11 @@ void setup() {
 }
 
 void loop() {
+  // debug code
+  if (Serial.available() < HDR_BYTES) {
+    return;   
+  }
+
   // 1) Read frame header (MAGIC+SEQ)
   readExactBytes(Serial, hdr, HDR_BYTES);         // first read header -> read exact bytes: 6 bytes and save as hdr
 
@@ -40,6 +48,7 @@ void loop() {
   if (rd_u16_le(&hdr[0]) != MAGIC) return;        // read value (from the address: &hdr[0] -> hdr[1]) and make 16-bit value (hdr[{0,1}]), compare with MAGIC
   
   const uint32_t seq_read = rd_u32_le(&hdr[2]);              // split seq - code changed 
+  if (Serial.available() < (DATA_BYTES + CRC_BYTES)) return;  // <-- 추가
 
   // 2) Read 512 data
   readExactBytes(Serial, data512, DATA_BYTES);    // data512 includes pico1, pico2 action data 
