@@ -3,7 +3,7 @@ import struct
 import serial
 
 # config. - USB
-PORT = "/dev/cu.usbmodem3101" 
+PORT = "/dev/cu.usbmodem1101" 
 
 BAUDRATE = 115200
 TIMEOUT  = 0.5

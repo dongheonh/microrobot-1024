@@ -15,9 +15,11 @@ constexpr uint32_t ACK_TIMEOUT_US = 200000; // 200ms
 #define ENABLE_I2C_ACTIONS 1 // code changed (testing)
 
 void setup() {
+  
+  delay(2000);
   Serial.begin(115200);
   
-  delay(1000);
+  delay(200);
   Serial.println("pico2 boot");
 
   Serial1.setTX(0);  // GP0
@@ -32,7 +34,7 @@ void setup() {
   Wire.begin();
   Wire1.begin();
   Wire.setClock(I2C_HZ);
-  Wire1.setClock(I2C_HZ);
+
 }
 
 void loop() {
